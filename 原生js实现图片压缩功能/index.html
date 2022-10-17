@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+		<input onchange="change()"
+			   id="file"
+			   accept="image/*"
+			   multiple="multiple"
+			   type="file" />
+		<div>
+			<div id="start">压缩前</div>
+			<img id="img1"
+				 src="" />
+
+		</div>
+		<button onclick="clicks()">压缩</button>
+		<div>
+			<div id="end">压缩后</div>
+			<img id="img2"
+				 src="" />
+		</div>
+	</body>
+	<script>
+		function change() {
+			let file = document.getElementById("file")
+			let img = document.getElementById("img1")
+			var fr = new FileReader();
+			console.log(file.files[0]);
+			// 资源的读取
+			fr.readAsDataURL(file.files[0]);
+			// 绑定读取完毕事件
+			fr.onload = function() {
+				// 将图片的src指向读取到的base64
+				img.src = fr.result;
+				document.getElementById("start").innerHTML = "压缩前" + getSize1(file.files[0].size)
+			}
+		}
+
+		function clicks() {
+			let img2 = document.getElementById("img2")
+			let file = document.getElementById("file")
+			var fr = new FileReader();
+			// 资源的读取
+			fr.readAsDataURL(file.files[0]);
+			// 绑定读取完毕事件
+			fr.onload = function() {
+				// 将图片的src指向读取到的base64
+				let imga = document.createElement('img');
+				imga.src = fr.result;
+				imga.style.position = 'fixed';
+				imga.style.top = '-4000px';
+				document.body.appendChild(imga);
+				imga.onload = () => {
+					let canvas = document.createElement('canvas');
+					canvas.style.position = 'fixed';
+					canvas.style.top = '-4000px';
+					canvas.width = imga.width;
+					canvas.height = imga.height;
+					document.body.appendChild(canvas);
+					var ctx = canvas.getContext('2d');
+					ctx.drawImage(imga, 0, 0, canvas.width, canvas.height);
+					var base64Img = canvas.toDataURL('image/jpeg', 1);
+					document.body.removeChild(canvas);
+					document.body.removeChild(imga);
+					img2.src = base64Img;
+					let f = base64toFile(base64Img, "testimg")
+					console.log(f)
+					document.getElementById("end").innerHTML = "压缩后" + getSize1(f.size)
+				}
+			}
+		}
+
+		function getSize1(size) {
+			if (size >= 1024 * 1024 * 1024) {
+				size = (size / 1024 / 1024 / 1024) + 'GB';
+			} else if (size >= 1024 * 1024) {
+				size = (size / 1024 / 1024) + 'MB';
+			} else if (size >= 1024) {
+				size = (size / 1024) + 'KB';
+			} else if (size < 1024) {
+				size = size + 'bit';
+			}
+			return size;
+		}
+
+		function base64toFile(dataurl, filename = 'file') {
+			let arr = dataurl.split(',');
+			let mime = arr[0].match(/:(.*?);/)[1];
+			// suffix是该文件的后缀
+			let suffix = mime.split('/')[1];
+			// atob 对经过 base-64 编码的字符串进行解码
+			let bstr = atob(arr[1]);
+			// n 是解码后的长度
+			let n = bstr.length;
+			// Uint8Array 数组类型表示一个 8 位无符号整型数组 初始值都是 数子0
+			let u8arr = new Uint8Array(n);
+			// charCodeAt() 方法可返回指定位置的字符的 Unicode 编码。这个返回值是 0 - 65535 之间的整数
+			while (n--) {
+				u8arr[n] = bstr.charCodeAt(n);
+			}
+			// new File返回File对象 第一个参数是 ArraryBuffer 或 Bolb 或Arrary 第二个参数是文件名
+			// 第三个参数是 要放到文件中的内容的 MIME 类型
+			return new File([u8arr], `${filename}.${suffix}`, {
+				type: mime,
+			});
+		}
+	</script>
+</html>
