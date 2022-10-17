@@ -58,7 +58,9 @@
 				background-color: #fff;
 				border-radius: 50%;
 			}
-
+			.act{
+				background-color: #666;
+			}
 			button {
 				width: 100px;
 				height: 50px;
@@ -78,8 +80,8 @@
 				</canvas>
 
 				<div class="tools">
-					<button onclick="opens()">画笔</button>
-					<button onclick="clicks()">橡皮</button>
+					<button id="huabi" onclick="opens()">画笔</button>
+					<button id="xiangpi" onclick="clicks()">橡皮</button>
 					<button onclick="fill()">填充</button>
 					<button onclick="clears()">清空</button>
 					<!-- <button onclick="back()">撤销</button> -->
@@ -139,6 +141,8 @@
 		let canvas = document.getElementById("canvas")
 		let ctx = canvas.getContext("2d")
 		let box = document.querySelector(".content")
+		document.getElementById("xiangpi").classList.remove('act')
+		document.getElementById("huabi").classList.add('act')
 		canvas.width = box.clientWidth
 		canvas.height = box.clientHeight
 		ctx.lineCap = "round"
@@ -177,10 +181,14 @@
 
 		function clicks() {
 			isClear = true
+			document.getElementById("xiangpi").classList.add('act')
+			document.getElementById("huabi").classList.remove('act')
 		}
 
 		function opens() {
 			isClear = false
+			document.getElementById("xiangpi").classList.remove('act')
+			document.getElementById("huabi").classList.add('act')
 		}
 
 		function fill() {
@@ -198,14 +206,30 @@
 		function setStyle(size) {
 			ctx.lineWidth = size;
 		}
-		function back(){
+
+		function back() {
 			ctx.restore()
 		}
-		function save(){
+
+		function save() {
 			ctx.save()
 		}
-		function clears(){
-			 ctx.clearRect(0,0,box.clientWidth,box.clientHeight)
+
+		function reqAnim(width) {
+			let w = width
+			requestAnimationFrame(() => {
+				if(w<box.clientWidth){
+					ctx.clearRect(0, 0, w, box.clientHeight)
+					w = w+30
+					reqAnim(w)
+				}else{
+					ctx.clearRect(0, 0, w, box.clientHeight)
+				}
+			})
+		}
+
+		function clears() {
+			reqAnim(0)
 		}
 	</script>
 </html>
