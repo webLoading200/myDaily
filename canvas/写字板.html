@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<style type="text/css">
+			body {
+				padding: 0;
+				margin: 0;
+			}
+
+			.bg {
+				width: 100vw;
+				height: 100vh;
+				background-color: #000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.content {
+				width: 50vw;
+				height: 50vh;
+				background-color: #fff;
+				position: relative;
+			}
+
+			.tools {
+				width: 50vw;
+				display: flex;
+			}
+
+			.clear {
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				background-color: #fff;
+				cursor: pointer;
+			}
+
+			.color-box {
+				color: #fff;
+				width: 100px;
+				height: 100px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				flex-direction: column;
+			}
+
+			.color-item {
+				width: 30px;
+				height: 30px;
+				margin-top: 5px;
+			}
+
+			.style-item {
+				background-color: #fff;
+				border-radius: 50%;
+			}
+
+			button {
+				width: 100px;
+				height: 50px;
+				font-size: 18px;
+				color: #fff;
+				font-weight: 800;
+				background-color: lawngreen;
+				border-radius: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="bg">
+			<div class="content">
+				<canvas id="canvas">
+					您的浏览器不支持 HTML5 canvas 标签。
+				</canvas>
+
+				<div class="tools">
+					<button onclick="opens()">画笔</button>
+					<button onclick="clicks()">橡皮</button>
+					<button onclick="fill()">填充</button>
+					<button onclick="clears()">清空</button>
+					<!-- <button onclick="back()">撤销</button> -->
+					<div class="color-box">
+						铅笔颜色
+						<div style="background-color: #157622;"
+							 class="color-item"
+							 onclick="setColor('#157622')"></div>
+						<div class="color-item"
+							 style="background-color: red;"
+							 onclick="setColor('red')"></div>
+						<div class="color-item"
+							 style="background-color: yellow;"
+							 onclick="setColor('yellow')"></div>
+						<div class="color-item"
+							 style="background-color: green;"
+							 onclick="setColor('green')"></div>
+					</div>
+					<div class="color-box"">
+						填充颜色
+						<div class="
+						 color-item"
+						 style="
+						 background-color:
+						 #157622;width:30px;height:
+						 30px;"
+						 onclick="setfillStyle('#157622')"></div>
+					<div class="color-item"
+						 style="background-color: red;"
+						 onclick="setfillStyle('red')"></div>
+					<div class="color-item"
+						 style="background-color: yellow;"
+						 onclick="setfillStyle('yellow')"></div>
+					<div class="color-item"
+						 style="background-color: green;"
+						 onclick="setfillStyle('green')"></div>
+				</div>
+				<div class="color-box">
+					笔头
+					<div class="style-item"
+						 style="width: 5px;height: 5px;"
+						 onclick="setStyle(5)"></div>
+					<div class="style-item"
+						 style="width: 10px;height: 10px;"
+						 onclick="setStyle(10)"></div>
+					<div class="style-item"
+						 style="width: 30px;height: 30px;"
+						 onclick="setStyle(30)"></div>
+				</div>
+
+			</div>
+
+		</div>
+		</div>
+	</body>
+	<script>
+		let canvas = document.getElementById("canvas")
+		let ctx = canvas.getContext("2d")
+		let box = document.querySelector(".content")
+		canvas.width = box.clientWidth
+		canvas.height = box.clientHeight
+		ctx.lineCap = "round"
+		let isOpen = false
+		let isClear = false
+		canvas.addEventListener("mouseenter", () => {
+			console.log("鼠标移入")
+			isOpen = false
+		})
+		canvas.addEventListener("mouseleave", () => {
+			console.log("鼠标移出")
+			isOpen = false
+		})
+
+		canvas.addEventListener("mousemove", (e) => {
+			if (isOpen) {
+				if (!isClear) {
+					console.log("鼠标移动", e.offsetX, e.offsetY)
+					ctx.lineTo(e.offsetX, e.offsetY);
+					ctx.stroke();
+				} else {
+					ctx.clearRect(e.offsetX - 15, e.offsetY - 15, 30, 30);
+				}
+			}
+		})
+
+		canvas.addEventListener("mousedown", (e) => {
+			console.log("鼠标按下")
+			isOpen = true
+			ctx.beginPath()
+		})
+		canvas.addEventListener("mouseup", () => {
+			console.log("鼠标松开")
+			isOpen = false
+		})
+
+		function clicks() {
+			isClear = true
+		}
+
+		function opens() {
+			isClear = false
+		}
+
+		function fill() {
+			ctx.fill()
+		}
+
+		function setColor(color) {
+			ctx.strokeStyle = color
+		}
+
+		function setfillStyle(color) {
+			ctx.fillStyle = color;
+		}
+
+		function setStyle(size) {
+			ctx.lineWidth = size;
+		}
+		function back(){
+			ctx.restore()
+		}
+		function save(){
+			ctx.save()
+		}
+		function clears(){
+			 ctx.clearRect(0,0,box.clientWidth,box.clientHeight)
+		}
+	</script>
+</html>
