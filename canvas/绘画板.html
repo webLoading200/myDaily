@@ -58,9 +58,11 @@
 				background-color: #fff;
 				border-radius: 50%;
 			}
-			.act{
+
+			.act {
 				background-color: #666;
 			}
+
 			button {
 				width: 100px;
 				height: 50px;
@@ -80,11 +82,15 @@
 				</canvas>
 
 				<div class="tools">
-					<button id="huabi" onclick="opens()">画笔</button>
-					<button id="xiangpi" onclick="clicks()">橡皮</button>
+					<button id="huabi"
+							onclick="opens()">画笔</button>
+					<button id="xiangpi"
+							onclick="clicks()">橡皮</button>
+					<button id="selec"
+							onclick="select()">拖拽</button>
 					<button onclick="fill()">填充</button>
 					<button onclick="clears()">清空</button>
-					<!-- <button onclick="back()">撤销</button> -->
+					<button onclick="back()">撤销</button>
 					<div class="color-box">
 						铅笔颜色
 						<div style="background-color: #157622;"
@@ -145,9 +151,15 @@
 		document.getElementById("huabi").classList.add('act')
 		canvas.width = box.clientWidth
 		canvas.height = box.clientHeight
+		let canvasHistory = []
+		let canvasHistoryIndex = -1
 		ctx.lineCap = "round"
 		let isOpen = false
 		let isClear = false
+		let isselect = false
+		let selectIndex = -1
+		let startX = 0
+		let startY = 0
 		canvas.addEventListener("mouseenter", () => {
 			console.log("鼠标移入")
 			isOpen = false
@@ -159,10 +171,31 @@
 
 		canvas.addEventListener("mousemove", (e) => {
 			if (isOpen) {
+				if (isselect) {
+					if (selectIndex >= 0) {
+						canvasHistory[selectIndex].point.forEach((item, index) => {
+							let x = e.offsetX - startX
+							let y = e.offsetY - startY
+							canvasHistory[selectIndex].point[index].x += x
+							canvasHistory[selectIndex].point[index].y += y
+						})
+						console.log(selectIndex)
+						back(false)
+						startX = e.offsetX
+						startY = e.offsetY
+					}
+
+					return
+				}
 				if (!isClear) {
 					console.log("鼠标移动", e.offsetX, e.offsetY)
+
 					ctx.lineTo(e.offsetX, e.offsetY);
 					ctx.stroke();
+					canvasHistory[canvasHistoryIndex].point.push({
+						x: e.offsetX,
+						y: e.offsetY
+					})
 				} else {
 					ctx.clearRect(e.offsetX - 15, e.offsetY - 15, 30, 30);
 				}
@@ -171,8 +204,47 @@
 
 		canvas.addEventListener("mousedown", (e) => {
 			console.log("鼠标按下")
+			if (isselect) {
+				isOpen = true
+				if (!isselect) {
+					return
+				}
+				let inDom = false
+				canvasHistory.forEach(item => {
+					ctx.strokeStyle = item.penColor
+					ctx.lineWidth = item.penSize
+					ctx.beginPath()
+					item.point.forEach(point => {
+						ctx.lineTo(point.x, point.y);
+						ctx.stroke();
+						if (ctx.isPointInPath(e.offsetX, e.offsetY))
+							inDom = item.index
+						selectIndex = item.index
+					})
+					if (item.fillColor) {
+						ctx.fillStyle = item.fillColor;
+						ctx.fill()
+					}
+
+				})
+				if (inDom >= 0) {
+					startX = e.offsetX
+					startY = e.offsetY
+				}
+				console.log(inDom)
+				e.preventDefault();
+				return
+			}
 			isOpen = true
+			canvasHistoryIndex++
 			ctx.beginPath()
+			canvasHistory.push({
+				index: canvasHistoryIndex,
+				point: [],
+				fillColor: null,
+				penColor: ctx.strokeStyle || "#000",
+				penSize: ctx.lineWidth || 5
+			})
 		})
 		canvas.addEventListener("mouseup", () => {
 			console.log("鼠标松开")
@@ -183,16 +255,26 @@
 			isClear = true
 			document.getElementById("xiangpi").classList.add('act')
 			document.getElementById("huabi").classList.remove('act')
+			document.getElementById("selec").classList.remove('act')
+			isselect = false
 		}
 
 		function opens() {
 			isClear = false
 			document.getElementById("xiangpi").classList.remove('act')
 			document.getElementById("huabi").classList.add('act')
+			document.getElementById("selec").classList.remove('act')
+			isselect = false
 		}
 
 		function fill() {
 			ctx.fill()
+			canvasHistory[canvasHistoryIndex].fillColor = ctx.fillStyle
+			// let data = JSON.parse(JSON.stringify(canvasHistory[canvasHistoryIndex]))
+			// data.index++
+			// data.fillColor = ctx.fillStyle
+			// canvasHistory.push(data)
+			// canvasHistoryIndex++
 		}
 
 		function setColor(color) {
@@ -207,22 +289,64 @@
 			ctx.lineWidth = size;
 		}
 
-		function back() {
-			ctx.restore()
+		function back(i = true) {
+			if (canvasHistory.length <= 0) {
+				return
+			}
+			if (i) {
+				canvasHistory.pop()
+				canvasHistoryIndex--
+			}
+
+			ctx.clearRect(0, 0, box.clientWidth, box.clientHeight)
+			canvasHistory.forEach(item => {
+				ctx.strokeStyle = item.penColor
+				ctx.lineWidth = item.penSize
+				ctx.beginPath()
+				item.point.forEach(point => {
+					ctx.lineTo(point.x, point.y);
+					ctx.stroke();
+				})
+				if (item.fillColor) {
+					ctx.fillStyle = item.fillColor;
+					ctx.fill()
+				}
+
+			})
+		}
+
+		
+
+		function select(e) {
+			if (isselect) {
+				document.getElementById("xiangpi").classList.remove('act')
+				document.getElementById("huabi").classList.add('act')
+				document.getElementById("selec").classList.remove('act')
+			} else {
+				document.getElementById("xiangpi").classList.remove('act')
+				document.getElementById("huabi").classList.remove('act')
+				document.getElementById("selec").classList.add('act')
+			}
+			isselect = !isselect
+
+		}
+
+		function checkcClick() {
+
 		}
 
 		function save() {
-			ctx.save()
+
 		}
 
 		function reqAnim(width) {
 			let w = width
 			requestAnimationFrame(() => {
-				if(w<box.clientWidth){
+				if (w < box.clientWidth) {
 					ctx.clearRect(0, 0, w, box.clientHeight)
-					w = w+30
+					w = w + 30
 					reqAnim(w)
-				}else{
+				} else {
 					ctx.clearRect(0, 0, w, box.clientHeight)
 				}
 			})
@@ -230,6 +354,8 @@
 
 		function clears() {
 			reqAnim(0)
+			canvasHistory = []
+			canvasHistoryIndex = -1
 		}
 	</script>
 </html>
