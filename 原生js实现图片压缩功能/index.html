@@ -62,7 +62,7 @@
 					document.body.appendChild(canvas);
 					var ctx = canvas.getContext('2d');
 					ctx.drawImage(imga, 0, 0, canvas.width, canvas.height);
-					var base64Img = canvas.toDataURL('image/jpeg', 1);
+					var base64Img = canvas.toDataURL('image/jpeg', 0.2);
 					document.body.removeChild(canvas);
 					document.body.removeChild(imga);
 					img2.src = base64Img;

@@ -206,9 +206,7 @@
 			console.log("鼠标按下")
 			if (isselect) {
 				isOpen = true
-				if (!isselect) {
-					return
-				}
+				selectIndex = -1
 				let inDom = false
 				canvasHistory.forEach(item => {
 					ctx.strokeStyle = item.penColor
@@ -217,9 +215,11 @@
 					item.point.forEach(point => {
 						ctx.lineTo(point.x, point.y);
 						ctx.stroke();
-						if (ctx.isPointInPath(e.offsetX, e.offsetY))
+						if (ctx.isPointInPath(e.offsetX, e.offsetY)) {
 							inDom = item.index
-						selectIndex = item.index
+							selectIndex = item.index
+						}
+
 					})
 					if (item.fillColor) {
 						ctx.fillStyle = item.fillColor;
@@ -249,6 +249,7 @@
 		canvas.addEventListener("mouseup", () => {
 			console.log("鼠标松开")
 			isOpen = false
+			this.selectIndex = -1
 		})
 
 		function clicks() {
@@ -315,7 +316,7 @@
 			})
 		}
 
-		
+
 
 		function select(e) {
 			if (isselect) {
