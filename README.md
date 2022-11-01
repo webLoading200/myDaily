@@ -24,7 +24,8 @@
 ```
 
 #### 实例化
-```		const people = {
+```		
+		const people = {
 			name: 1,
 			age: 12,
 			parents: {
