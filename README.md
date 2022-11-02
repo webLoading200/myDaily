@@ -60,5 +60,5 @@
 ## 不同动画实现方式效果对比
 在不引人第三方库的情况下，使用css3的和setInterval还有requestAnimationFrame三种方式实现选择动效进行对比动画效果  
 animation：关键帧动画，类似requestAnimationFrame机制。通过 @keyframes 来定义关键帧， 浏览器会根据计时函数插值计算其余帧。 最流畅  
-requestAnimationFrame ：定义浏览器在下一帧优先执行的dom操作。时间间隔紧紧跟随浏览器的刷新频率。动画效果和css差不多
+requestAnimationFrame ：定义浏览器在下一帧优先执行的dom操作。时间间隔紧紧跟随浏览器的刷新频率。动画效果和css差不多  
 setInterval：通过计时器来执行动画，但是由于js单线程机制，在执行其他操作时可能导致动画丢帧，表现的没有钱两者流畅
