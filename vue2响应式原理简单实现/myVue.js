@@ -47,7 +47,7 @@ function defineReactive(data, key, val) {
 		configurable: true,
 		get: function() {
 			// 读取 data[key] 时触发
-			dep.depend(key);
+			dep.addSub(key);
 			return val;
 		},
 		set: function(newVal) {
@@ -74,7 +74,6 @@ class Dep {
 	}
 	addSub(sub) {
 		if (window.target) {
-			console.log(window.temp)
 			for (let i = 0; i < this.subs.length; i++) {
 				if (this.subs[i].target == window.target) {
 					this.subs.splice(i, 1);
@@ -82,11 +81,13 @@ class Dep {
 			}
 			let d = {
 				target: window.target,
-				temp: window.temp
+				temp: window.temp,
+				type: window.type
 			}
 			this.subs.push(d);
 			window.target = null
 			window.temp = null
+			window.type = null
 		}
 
 	}
@@ -96,15 +97,17 @@ class Dep {
 			this.subs.splice(index, 1);
 		}
 	}
-	depend(name) {
-		this.addSub(name);
-	}
 	notify(key, e) {
 		console.log(this.subs, key, e)
 		const subs = this.subs.slice();
 		for (let i = 0; i < subs.length; i++) {
 			//触发更新函数。{{}} v-if v-model 等
-			subs[i].target.innerHTML = render(subs[i].temp, vueData)
+			console.log(subs[i].target)
+			if (subs[i].type == 'input') {
+				subs[i].target.value = render(`{{${subs[i].temp}}}`, vueData)
+			} else {
+				subs[i].target.nodeValue = render(subs[i].temp, vueData)
+			}
 		}
 	}
 }
@@ -150,7 +153,6 @@ function getVNode(node) {
 		//node的子节点
 		let childNodes = node.childNodes
 		// 打印验证生成的子节点
-		//console.log(childNodes)
 		//子节点进行循环遍历生成虚拟DOM
 		for (let i = 0; i < childNodes.length; i++) {
 			_vnode.appendChild(getVNode(childNodes[i]))
@@ -164,7 +166,7 @@ function getVNode(node) {
 	return _vnode
 }
 
-const reg = /\{\{(\w+)\}\}/;
+const reg = /\{\{([\w\W]+)\}\}/;
 
 function parseVNode(vnode) {
 	//获取类型
@@ -173,11 +175,15 @@ function parseVNode(vnode) {
 	let _node = null
 	//文本节点
 	if (type === 3) {
-		if (vnode.value) {
-
-
+		let txtNode = document.createTextNode(vnode.value)
+		if (reg.test(vnode.value)) {
+			window.target = txtNode
+			window.temp = vnode.value
+			window.type = "txt"
+			console.log(vnode.value)
+			txtNode.nodeValue = render(vnode.value, vueData)
 		}
-		return document.createTextNode(vnode.value) //创建文本节点
+		return txtNode //创建文本节点
 
 	} else if (type === 1) {
 		//元素节点
@@ -187,6 +193,19 @@ function parseVNode(vnode) {
 		Object.keys(props).forEach((key) => {
 			let attrName = key //属性名
 			let attrValue = props[key] //属性值
+			if (attrName == "v-model") {
+				// vueData[attrValue] = _node.value;
+				_node.addEventListener('input', function(e) {
+					console.log(123)
+					vueData[attrValue] = _node.value;
+				}, false);
+			}
+			if (attrName == ":value") {
+				window.target = _node
+				window.temp = attrValue
+				window.type = "input"
+				_node.value = render(`{{${attrValue}}}`, vueData)
+			}
 			//绑定标签的属性值
 			_node.setAttribute(attrName, attrValue)
 		})
@@ -194,28 +213,45 @@ function parseVNode(vnode) {
 		let children = vnode.children
 		//遍历子节点 ,子节点此时为虚拟DOM
 		children.forEach((subvnode) => {
-			if (reg.test(subvnode.value)) {
-				window.target = _node
-				window.temp = subvnode.value
-				subvnode.value = render(subvnode.value, vueData)
-			}
 			_node.appendChild(parseVNode(subvnode)) //调用转换真实DOM函数,递归转换为子元素
 		})
 		return _node
 	}
 }
-//解析vue模板{{}}语法
+//解析vue模板{{}}语法//暂未对模板中的数组编译，目前支持基本数据类型和对象
 function render(template, data) {
-	const reg = /\{\{(\w+)\}\}/; // 模板字符串正则
+	const reg = /\{\{([\w\W]+)\}\}/; // 模板字符串正则
+	// console.log(template)
 	if (reg.test(template)) { // 判断模板里是否有模板字符串
-		const name = reg.exec(template)[1]; // 查找当前模板里第一个模板字符串的字段
-		template = template.replace(reg, data[name]); // 将第一个模板字符串渲染
-		return render(template, data); // 递归的渲染并返回渲染后的结构
+		const name = reg.exec(template)[1].split('.') // 查找当前模板里第一个模板字符串的字段。判断是否为复杂数据类型
+		if (name.length>1) {
+			// console.log(template)
+			let temData = data
+			let temName = ''
+			for(let i=0;i<name.length;i++){
+				if(typeof temData[name[i]]=='object'){
+					temData = temData[name[i]]
+				}else{
+					temData = temData
+				}
+				temName = name[i]
+			}
+			// console.log(temData,temName)
+			template = template.replace(reg, `{{${temName}}}`); // 
+			// console.log(template)
+			return render(template, temData); // 递归的渲染并返回渲染后的结构
+		} else {
+			template = template.replace(reg, data[name[0]]); // 将第一个模板字符串渲染
+			// console.log(template)
+			return render(template, data); // 递归的渲染并返回渲染后的结构
+		}
+
 	}
 	return template; // 如果模板没有模板字符串直接返回
 }
 let vueData = {}
-function myVue(ele,data) {
+
+function myVue(ele, data) {
 	vueData = data
 	new Observer(vueData);
 	let root = ele
@@ -224,6 +260,4 @@ function myVue(ele,data) {
 	let Edom = parseVNode(vroot)
 	document.body.removeChild(root) //移除原来的dom
 	document.body.appendChild(Edom) //渲染编译后的dom
-	console.log(Edom)
 }
-

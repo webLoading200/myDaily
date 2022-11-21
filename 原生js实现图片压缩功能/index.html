@@ -107,5 +107,20 @@
 				type: mime,
 			});
 		}
+		var count = 1
+		let a = {
+			count: 5,
+			fun: function() {
+				console.log(this.count)
+			}
+		}
+		let b = {
+			count: 0,
+			fun: () => {
+				console.log(this)
+			}
+		}
+		a.fun()
+		b.fun.call(a, a)
 	</script>
 </html>
